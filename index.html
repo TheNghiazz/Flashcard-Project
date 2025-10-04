@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
+    <title>Flashcard Learning App</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="login-container">
+                <h2>Đăng Nhập</h2>
+                <p>Nhập tên người dùng để tiếp tục</p>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <input type="text" id="usernameInput" placeholder="Tên người dùng" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Đăng Nhập</button>
+                </form>
+                <div class="login-info">
+                    <p><small>Dữ liệu sẽ được lưu riêng cho từng người dùng</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- User Info Bar -->
+        <div class="user-info-bar" id="userInfoBar" style="display: none;">
+            <div class="user-info">
+                <span class="user-name" id="currentUserName"></span>
+                <button class="btn btn-small btn-secondary" id="logoutBtn">Đăng Xuất</button>
+            </div>
+        </div>
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <span class="logo-text">Q+</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <button class="nav-item" data-tab="add" data-tooltip="Trang chủ">
+                        <i class="fas fa-home"></i>
+                        <span data-lang-key="add-cards-tab">Trang chủ</span>
+                    </button>
+                    <button class="nav-item active" data-tab="study" data-tooltip="Thư viện của bạn">
+                        <i class="fas fa-folder-open"></i>
+                        <span data-lang-key="study-tab">Thư viện của bạn</span>
+                    </button>
+                    <button class="nav-item" data-tab="manage" data-tooltip="Thông báo">
+                        <i class="fas fa-bell"></i>
+                        <span data-lang-key="manage-tab">Thông báo</span>
+                    </button>
+                </div>
+                
+                <div class="nav-divider"></div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Thư mục của bạn</div>
+                    <div id="folder-list">
+                        <!-- Folders will be dynamically loaded here -->
+                    </div>
+                    <button class="nav-item nav-folder" data-tooltip="Thư mục mới" id="new-folder-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>Thư mục mới</span>
+                    </button>
+                </div>
+                
+                <div class="nav-divider"></div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Bắt đầu tại đây</div>
+                    <button class="nav-item" data-tooltip="Thẻ ghi nhớ">
+                        <i class="fas fa-layer-group"></i>
+                        <span>Thẻ ghi nhớ</span>
+                    </button>
+                    <button class="nav-item" data-tooltip="Lời giải chuyên...">
+                        <i class="fas fa-book"></i>
+                        <span>Lời giải chuyên...</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+        <!-- Create Folder Modal -->
+        <div class="modal-overlay" id="create-folder-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Tạo thư mục mới</h3>
+                    <button class="modal-close" id="close-folder-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="folder-name">Tên thư mục:</label>
+                        <input type="text" id="folder-name" placeholder="Nhập tên thư mục..." maxlength="50">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-folder">Hủy</button>
+                    <button class="btn btn-primary" id="create-folder">Tạo thư mục</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <header class="header">
+                <div class="header-top">
+                    <h1><i class="fas fa-brain"></i> <span data-lang-key="app-title">Flashcard Learning</span></h1>
+                    <div class="language-toggle">
+                        <button id="lang-toggle" class="btn btn-language">
+                            <i class="fas fa-language"></i>
+                            <span id="lang-text">VI</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+        <main class="main-content">
+            <!-- Add Cards Tab -->
+            <div id="add-tab" class="tab-content active">
+                <div class="add-methods">
+
+                    <!-- Single Card Method -->
+                    <div id="single-method" class="method-content active">
+                        <div class="card-form">
+                            <h2 data-lang-key="add-flashcards-title">Add New Flashcards</h2>
+                            <div class="form-controls">
+                                <div class="form-group category-group">
+                                    <label for="category" data-lang-key="lesson-name-label">Lesson Name (Required):</label>
+                                    <input type="text" id="category" data-lang-key="lesson-name-placeholder" placeholder="Enter lesson name (e.g., English Vocabulary, Math Terms...)" required>
+                                </div>
+                                <div class="form-controls-buttons">
+                                    <button type="button" id="add-row-btn" class="btn btn-secondary">
+                                        <i class="fas fa-plus"></i> <span data-lang-key="add-row">Add Row</span>
+                                    </button>
+                                    <button type="button" id="bulk-import-btn" class="btn btn-secondary">
+                                        <i class="fas fa-list"></i> <span data-lang-key="bulk-import">Bulk Import</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <form id="add-card-form">
+                                <div id="card-rows-container">
+                                    <!-- Card rows will be added here dynamically -->
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> <span data-lang-key="save-all-flashcards">Save All Flashcards</span>
+                                    </button>
+                                    <button type="button" id="clear-all-btn" class="btn btn-secondary">
+                                        <i class="fas fa-trash"></i> <span data-lang-key="clear-all">Clear All</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Study Tab -->
+            <div id="study-tab" class="tab-content">
+                <div class="study-container">
+                    <div class="study-header">
+                        <h2>Study Mode</h2>
+                        <div class="study-controls">
+                            <select id="category-filter">
+                                <option value="">All Lessons</option>
+                            </select>
+                            <button id="shuffle-btn" class="btn btn-secondary">
+                                <i class="fas fa-random"></i> Shuffle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flashcard-container">
+                        <div id="no-cards-message" class="no-cards">
+                            <i class="fas fa-info-circle"></i>
+                            <p>No flashcards available. Add some cards first!</p>
+                        </div>
+                        
+                        <div id="flashcard-study" class="flashcard" style="display: none;">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <div class="card-content" id="card-front-content"></div>
+                                    <div class="flip-hint">Click to reveal answer</div>
+                                </div>
+                                <div class="flashcard-back">
+                                    <div class="card-content" id="card-back-content"></div>
+                                    <div class="flip-hint">Click to see question</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="study-navigation">
+                            <button id="prev-btn" class="btn btn-secondary">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </button>
+                            <span id="card-counter">0 / 0</span>
+                            <button id="next-btn" class="btn btn-secondary">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage Cards Tab -->
+            <div id="manage-tab" class="tab-content">
+                <div class="manage-container">
+                    <div class="manage-header">
+                        <h2>Manage Flashcards</h2>
+                        <div class="manage-controls">
+                            <input type="text" id="search-cards" placeholder="Search cards...">
+                            <select id="manage-category-filter">
+                                <option value="">All Lessons</option>
+                            </select>
+                            <button id="delete-all-btn" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> Delete All
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="cards-list" class="cards-list">
+                        <!-- Cards will be dynamically inserted here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirm Action</h3>
+            <p id="modal-message">Are you sure?</p>
+            <div class="modal-buttons">
+                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Import Modal -->
+    <div id="bulk-import-modal" class="modal">
+        <div class="modal-content bulk-import-modal-content">
+            <h3>Bulk Import Flashcards</h3>
+            <div class="bulk-info">
+                <h4><i class="fas fa-info-circle"></i> Format Instructions</h4>
+                <p><strong>For best results with Vietnamese, use one of these separators:</strong></p>
+                <div class="format-example">
+                    <strong>Recommended - Tab key:</strong><br>
+                    <code>towards	đi hướng về phía nào</code>
+                </div>
+                <div class="format-example">
+                    <strong>Alternative - Pipe (|):</strong><br>
+                    <code>towards | đi hướng về phía nào</code>
+                </div>
+                <p>More examples:</p>
+                <div class="format-example">
+                    <code>beautiful	một cách đẹp đẽ</code><br>
+                    <code>good morning | chào buổi sáng</code><br>
+                    <code>how are you	bạn có khỏe không</code>
+                </div>
+                <p><em>Note: Space separation works only for single-word terms. For phrases, use Tab or pipe (|) for accurate parsing.</em></p>
+            </div>
+            <form id="bulk-import-form">
+                <div class="form-group">
+                    <label for="bulk-text">Flashcards Data:</label>
+                    <textarea id="bulk-text" placeholder="towards	đi hướng về phía nào&#10;beautiful | một cách đẹp đẽ&#10;school	trường học" rows="8" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="bulk-category">Lesson Name (Required):</label>
+                    <input type="text" id="bulk-category" placeholder="Enter lesson name (e.g., English Vocabulary, Math Terms...)" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="bulk-import-cancel" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Import Flashcards
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
